@@ -1,9 +1,27 @@
 /* === Font === */
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: #f8f9fa;
     color: #333;
     animation: fadeInBody 0.6s ease-in-out;
+}
+.custom-navbar {
+  background-color: #20c997; /* Navy Blue */
+}
+
+.custom-navbar .navbar-brand,
+.custom-navbar .nav-link {
+  color: #e02020;
+}
+
+.navbar-nav .nav-link:hover {
+  color: #f1c40f !important;
+  transition: color 0.2s ease;
+}
+
+.custom-navbar .nav-link:hover {
+  color: #f39c12;
 }
 
 /* === Navbar === */

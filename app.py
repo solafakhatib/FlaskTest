@@ -1,4 +1,5 @@
-from flask import Flask, abort, render_template, request
+import sqlite3
+from flask import Flask, abort, jsonify, render_template, request
 import os
 from sqlalchemy import case
 from flask_login import current_user
@@ -100,7 +101,24 @@ class Task(db.Model):
     due_date = db.Column(db.Date, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='To Do') # To Do, In Progress, Done
+    subtasks = db.relationship('Subtask', backref='task', cascade='all, delete-orphan')
     
+class Subtask(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(200), nullable=False)
+    is_done = db.Column(db.Boolean, default=False)
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
+    
+@app.route('/task/<int:task_id>/subtask', methods=['POST'])
+@login_required
+def add_subtask(task_id):
+    content = request.form['content']
+    conn = sqlite3.connect('instance/tasks.db')
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO subtask (content, is_done, task_id) VALUES (?, ?, ?)", (content, 0, task_id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('index'))
 
 # Routes
 @app.route('/add', methods=['POST'])
@@ -118,6 +136,20 @@ def add_task():
         flash("Task added successfully!")
     
     return redirect(url_for("index"))
+
+@app.route('/subtask/<int:subtask_id>/toggle', methods=['POST'])
+@login_required
+def toggle_subtask(subtask_id):
+    conn = sqlite3.connect('instance/tasks.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT is_done FROM subtask WHERE id = ?", (subtask_id,))
+    current = cursor.fetchone()
+    if current:
+        new_value = 0 if current[0] else 1
+        cursor.execute("UPDATE subtask SET is_done = ? WHERE id = ?", (new_value, subtask_id))
+        conn.commit()
+    conn.close()
+    return redirect(url_for('index'))
 
 @app.route('/')
 @login_required
@@ -166,16 +198,27 @@ def update_status(task_id):
     db.session.commit()
     return redirect(url_for('index'))
 
+
 @app.route("/delete/<int:task_id>")
+@login_required
 def delete_task(task_id):
     task = Task.query.get_or_404(task_id)
+    if task.user_id != current_user.id:
+        flash("Not authorized.", "danger")
+        return redirect(url_for('index'))
     db.session.delete(task)
     db.session.commit()
+    flash("Task deleted.", "info")
     return redirect(url_for("index"))
 
 @app.route("/edit/<int:task_id>", methods=["GET", "POST"])
+@login_required
 def edit_task(task_id):
     task = Task.query.get_or_404(task_id)
+    # 🛡️ Only allow if the task belongs to the current user
+    if task.user_id != current_user.id:
+        flash("You are not authorized to edit this task.", "danger")
+        return redirect(url_for('index'))
     
     if request.method == "POST":
         new_content = request.form.get("content")
