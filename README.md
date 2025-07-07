@@ -1,8 +1,6 @@
 # 📝 Flask Task Manager
 
-A simple and clean task manager built with **Python**, **Flask**, **Bootstrap**, and **SQLite**.  
-Create, edit, and delete personal tasks — with user authentication.
-
+"This is a task manager built with Flask. I focused on clean user experience and intuitive task flow. Each task is categorized by status and priority. I used Bootstrap to build a Kanban-style layout, and Flask routes allow users to create, update, and manage their tasks easily. The project supports user accounts, date-based filtering, and dynamic status updates."
 ---
 
 ## 🚀 Features
@@ -13,14 +11,13 @@ Create, edit, and delete personal tasks — with user authentication.
 - 🎨 Responsive UI with Bootstrap 5
 - 🔒 Password hashing with Werkzeug
 - 🌐 Session management
-- 💡 Flash messages for actions
 - 🖼️ Icon support using Bootstrap Icons
 
 ---
 
 ## 🖼️ Screenshot
 
-![Task Manager UI](static/demo.png) <!-- Optional: Replace with your own screenshot -->
+
 
 ---
 
