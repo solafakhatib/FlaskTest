@@ -2,6 +2,84 @@
 {% block content %}
 
 <h3 class="mb-4">My Tasks</h3>
+{% macro render_task(task, today) %}
+  <div class="card mb-2 border 
+    {% if task.priority == 'High' %}border-danger
+    {% elif task.priority == 'Medium' %}border-warning
+    {% else %}border-success{% endif %}">
+    
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-1">{{ task.content }}</h5>
+        <small>
+          Priority:
+          <span class="badge 
+            {% if task.priority == 'High' %}bg-danger
+            {% elif task.priority == 'Medium' %}bg-warning text-dark
+            {% else %}bg-success{% endif %}">
+            {{ task.priority }}
+          </span>
+          |
+          Status:
+          <span class="badge
+            {% if task.status == 'To Do' %}bg-secondary
+            {% elif task.status == 'In Progress' %}bg-info text-dark
+            {% elif task.status == 'Done' %}bg-success{% endif %}">
+            {{ task.status }}
+          </span>
+          |
+          Due:
+          <span class="{% if task.due_date and task.due_date < today %}text-danger fw-bold{% endif %}">
+            {{ task.due_date.strftime('%Y-%m-%d') if task.due_date else 'None' }}
+          </span>
+        </small>
+      </div>
+
+      <div>
+        <a href="{{ url_for('edit_task', task_id=task.id) }}" class="btn btn-sm btn-outline-warning me-2" title="Edit">
+          <i class="bi bi-pencil-square"></i>
+        </a>
+        <a href="{{ url_for('delete_task', task_id=task.id) }}" class="btn btn-sm btn-outline-danger" title="Delete">
+          <i class="bi bi-trash3"></i>
+        </a>   
+      </div>
+      <div class="mt-2">
+        {% if task.status == 'To Do' %}
+        <!-- Move to In Progress -->
+         <form method="POST" action="{{ url_for('update_status', task_id=task.id) }}" class="d-inline">
+          <input type="hidden" name="status" value="In Progress">
+          <button type="submit" class="btn btn-sm btn-outline-info" title="Move to In Progress">
+            <i class="bi bi-arrow-right-circle"></i>
+          </button>
+         </form>
+         {% elif task.status == 'In Progress' %}
+          <!-- Mark as Done -->
+           <form method="POST" action="{{ url_for('update_status', task_id=task.id) }}" class="d-inline">
+            <input type="hidden" name="status" value="Done">
+            <button type="submit" class="btn btn-sm btn-outline-success" title="Mark as Done">
+              <i class="bi bi-check-circle"></i>
+            </button>
+           </form>
+           <!-- Back to To Do -->
+            <form method="POST" action="{{ url_for('update_status', task_id=task.id) }}" class="d-inline">
+              <input type="hidden" name="status" value="To Do">
+              <button type="submit" class="btn btn-sm btn-outline-secondary" title="Back to To Do">
+                <i class="bi bi-arrow-left-circle"></i>
+              </button>
+            </form>
+            {% elif task.status == 'Done' %}
+            <!-- Move back to To Do -->
+             <form method="POST" action="{{ url_for('update_status', task_id=task.id) }}" class="d-inline">
+              <input type="hidden" name="status" value="To Do">
+              <button type="submit" class="btn btn-sm btn-outline-secondary" title="Move to To Do">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </button>
+             </form>
+             {% endif %}
+      </div>      
+    </div>
+  </div>
+{% endmacro %}
 
 <!-- Task Add Form -->
 <form method="POST" action="{{ url_for('add_task') }}" class="mb-4">
@@ -32,56 +110,36 @@
   <button type="submit" class="btn btn-sm btn-outline-primary">Filter</button>
 </form>
 <!-- Task List -->
-{% for task in tasks %}
-  <div class="card mb-2 border 
-    {% if task.priority == 'High' %}border-danger
-    {% elif task.priority == 'Medium' %}border-warning
-    {% else %}border-success{% endif %}">
-    
-    <div class="card-body d-flex justify-content-between align-items-center">
-      <div>
-        <h5 class="mb-1">{{ task.content }}</h5>
-        <small>
-          Priority:
-          <span class="badge 
-            {% if task.priority == 'High' %}bg-danger
-            {% elif task.priority == 'Medium' %}bg-warning text-dark
-            {% else %}bg-success{% endif %}">
-            {{ task.priority }}
-          </span>
-          |
-          Status:
-          <span class="badge
-            {% if task.status == 'To Do' %}bg-secondary
-            {% elif task.status == 'In Progress' %}bg-info text-dark
-            {% elif task.status == 'Done' %}bg-success{% endif %}"></span>
-            {{ task.status }}
-          </span>
-          |
-          Due:
-          <span class="{% if task.due_date and task.due_date < today %}text-danger fw-bold{% endif %}">
-            {{ task.due_date.strftime('%Y-%m-%d') if task.due_date else 'None' }}
-          </span>
-          
-        </small>
-      </div>
-    
-      
-
-
-      <div>
-        <a href="{{ url_for('edit_task', task_id=task.id) }}" class="btn btn-sm btn-outline-warning me-2" title="Edit">
-          <i class="bi bi-pencil-square"></i>
-        </a>
-        <a href="{{ url_for('delete_task', task_id=task.id) }}" class="btn btn-sm btn-outline-danger" title="Delete">
-          <i class="bi bi-trash3"></i>
-        </a>
-      </div>
-    </div>
+<div class="row g-3">
+  <!-- 📝 To Do Column -->
+  <div class="col-md-4 border-end">
+    <h4>📝 To Do</h4>
+    {% for task in tasks_to_do %}
+      {{ render_task(task, today) }}
+    {% else %}
+      <p class="text-muted">No tasks to do.</p>
+    {% endfor %}
   </div>
-{% else %}
-  <p class="text-muted">No tasks yet. Add one above!</p>
-{% endfor %}
 
+  <!-- 🕒 In Progress Column -->
+  <div class="col-md-4 border-end">
+    <h4>🕒 In Progress</h4>
+    {% for task in tasks_in_progress %}
+      {{ render_task(task, today) }}
+    {% else %}
+      <p class="text-muted">No tasks in progress.</p>
+    {% endfor %}
+  </div>
+
+  <!-- ✅ Done Column -->
+  <div class="col-md-4 border-end">
+    <h4>✅ Done</h4>
+    {% for task in tasks_done %}
+      {{ render_task(task, today) }}
+    {% else %}
+      <p class="text-muted">No completed tasks.</p>
+    {% endfor %}
+  </div>
+</div>
 
 {% endblock %}

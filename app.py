@@ -128,25 +128,43 @@ def index():
     #today = datetime.utcnow().date()
     today = date.today()
     selected_date = date_str if date_str else ''
-    query = Task.query.filter_by(user_id=current_user.id)
+    base_query = Task.query.filter_by(user_id=current_user.id)
     if date_str:
         try:
             selected = datetime.strptime(date_str,'%Y-%m-%d').date()
-            query = query.filter(Task.due_date == selected)
+            base_query = base_query.filter(Task.due_date == selected)
         except ValueError:
             pass
     if filter_status:
         query = query.filter(Task.status == filter_status)
+# Ordiring Logic
     priority_order = case(
         (Task.priority == 'High', 1),
         (Task.priority == 'Medium', 2),
         (Task.priority == 'Low', 3),
         else_=4
     )
-    tasks = query.order_by(priority_order, Task.due_date).all()   
+    # Fetch tasks grouped by status
+    tasks_to_do = base_query.filter(Task.status == 'To Do').order_by(priority_order)
+    tasks_in_progress = base_query.filter(Task.status == 'In Progress').order_by(priority_order)
+    tasks_done = base_query.filter(Task.status == 'Done').order_by(priority_order)
+    #tasks = query.order_by(priority_order, Task.due_date).all()   
 
     
-    return render_template('index.html', tasks=tasks, today=today, selected_date=selected_date, filter_status=filter_status)
+    return render_template('index.html', tasks_to_do=tasks_to_do,tasks_in_progress= tasks_in_progress,tasks_done= tasks_done, today=today, selected_date=selected_date)
+
+@app.route('/update_status/<int:task_id>', methods=['POST'])
+@login_required
+def update_status(task_id):
+    new_status = request.form.get('status')
+    task = Task.query.get_or_404(task_id)
+
+    if task.user_id != current_user.id:
+        abort(403)
+
+    task.status = new_status
+    db.session.commit()
+    return redirect(url_for('index'))
 
 @app.route("/delete/<int:task_id>")
 def delete_task(task_id):
