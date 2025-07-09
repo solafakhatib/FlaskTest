@@ -17,7 +17,13 @@
 
 ## 🖼️ Screenshot
 
-
+Register screen:
+![alt text](image.png)
+Login screen:
+![alt text](image-1.png)
+Tasks index:
+![alt text](image-3.png)
+![alt text](image-4.png)
 
 ---
 
@@ -38,7 +44,8 @@ flask-m/
 │ ├── tasks.db # SQLite database
 ├── app.py # Main application
 ├── README.md
-└── requirements.txt # still want to do it 
+├── Dockerfile
+└── requirements.txt
 ## 🧰 Technologies Used
 
 - Python 3.11+
